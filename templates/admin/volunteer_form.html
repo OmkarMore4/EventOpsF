@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit volunteer' if volunteer else 'Add volunteer' }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ 'Edit volunteer' if volunteer else 'Add volunteer' }}{% endblock %}
+
+{% block content %}
+{% set v = values or {} %}
+<form method="POST" class="max-w-2xl space-y-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-4">Profile</h2>
+    <div class="space-y-4">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="label-field" for="name">Full name</label>
+          <input class="input-field" type="text" id="name" name="name" required value="{{ v.get('name', '') }}">
+        </div>
+        <div>
+          <label class="label-field" for="domain">Domain</label>
+          <select class="select-field" id="domain" name="domain" required>
+            <option value="" disabled {{ 'selected' if not v.get('domain') else '' }}>Select a domain</option>
+            {% for d in event.domains %}
+            <option value="{{ d }}" {{ 'selected' if v.get('domain') == d else '' }}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="label-field" for="email">Email</label>
+          <input class="input-field" type="email" id="email" name="email" required value="{{ v.get('email', '') }}">
+        </div>
+        <div>
+          <label class="label-field" for="phone">Phone</label>
+          <input class="input-field" type="tel" id="phone" name="phone" value="{{ v.get('phone', '') }}">
+        </div>
+      </div>
+      <div>
+        <label class="label-field" for="responsibilities">Responsibilities</label>
+        <textarea class="textarea-field" id="responsibilities" name="responsibilities" rows="2" placeholder="What this volunteer is responsible for">{{ v.get('responsibilities', '') }}</textarea>
+      </div>
+      {% if volunteer %}
+      <div>
+        <label class="label-field" for="status">Status</label>
+        <select class="select-field max-w-xs" id="status" name="status">
+          <option value="active" {{ 'selected' if v.get('status') == 'active' else '' }}>Active</option>
+          <option value="inactive" {{ 'selected' if v.get('status') == 'inactive' else '' }}>Inactive</option>
+        </select>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-1">Login credentials</h2>
+    <p class="text-sm text-ink/60 mb-4">{{ "Share these with the volunteer so they can sign in." if not volunteer else "Leave the password blank to keep their current one." }}</p>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="username">Username</label>
+        <input class="input-field" type="text" id="username" name="username" required value="{{ v.get('username', '') }}" autocomplete="off">
+      </div>
+      <div>
+        <label class="label-field" for="password">{{ 'New password (optional)' if volunteer else 'Password' }}</label>
+        <input class="input-field" type="password" id="password" name="password" {{ 'required' if not volunteer else '' }} minlength="6" autocomplete="new-password">
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-primary">{{ 'Save changes' if volunteer else 'Add volunteer' }}</button>
+    <a href="{{ url_for('admin.volunteers_list') }}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

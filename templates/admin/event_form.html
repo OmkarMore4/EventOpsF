@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}{{ 'Edit event' if event else 'New event' }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ 'Edit event' if event else 'New event' }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+{% set v = values or {} %}
+<form method="POST" class="max-w-3xl space-y-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-4">Event details</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="label-field" for="name">Event name</label>
+        <input class="input-field" type="text" id="name" name="name" required value="{{ v.get('name', '') }}" placeholder="e.g. TechFusion 2026">
+      </div>
+      <div>
+        <label class="label-field" for="description">Description</label>
+        <textarea class="textarea-field" id="description" name="description" rows="2" placeholder="What is this event about?">{{ v.get('description', '') }}</textarea>
+      </div>
+      <div>
+        <label class="label-field" for="venue">Venue name</label>
+        <input class="input-field" type="text" id="venue" name="venue" required value="{{ v.get('venue', '') }}" placeholder="e.g. Central Convention Centre, Main Campus">
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="label-field" for="start_date">Start date</label>
+          <input class="input-field" type="date" id="start_date" name="start_date" required value="{{ v.get('start_date', '') }}">
+        </div>
+        <div>
+          <label class="label-field" for="end_date">End date</label>
+          <input class="input-field" type="date" id="end_date" name="end_date" required value="{{ v.get('end_date', '') }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-1">Venue location & geofence</h2>
+    <p class="text-sm text-ink/60 mb-4">Click the map to place the venue marker, drag it to fine-tune, or use your current GPS position if you're on-site. Volunteers can only mark attendance inside the shaded radius.</p>
+
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-medium text-ink/50">Drag the marker or click anywhere on the map</span>
+      <button type="button" id="use-my-location-btn" class="btn-secondary text-xs px-3 py-1.5">
+        {{ icons.icon('gps', 'w-3.5 h-3.5') }} Use my location
+      </button>
+    </div>
+    <div id="event-map" class="map-box-lg border border-ink/10"></div>
+
+    <div class="grid sm:grid-cols-3 gap-4 mt-4">
+      <div>
+        <label class="label-field" for="latitude">Latitude</label>
+        <input class="input-field coord-text" type="number" step="any" id="latitude" name="latitude" required value="{{ lat }}">
+      </div>
+      <div>
+        <label class="label-field" for="longitude">Longitude</label>
+        <input class="input-field coord-text" type="number" step="any" id="longitude" name="longitude" required value="{{ lng }}">
+      </div>
+      <div>
+        <label class="label-field" for="geofence_radius">Geofence radius (meters)</label>
+        <input class="input-field coord-text" type="number" min="10" step="1" id="geofence_radius" name="geofence_radius" required value="{{ v.get('geofence_radius', 100) }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-1">Volunteer domains</h2>
+    <p class="text-sm text-ink/60 mb-3">Comma-separated list of teams volunteers can be assigned to for this event.</p>
+    <input class="input-field" type="text" id="domains" name="domains"
+      value="{{ v.get('domains')|join(', ') if v.get('domains') is iterable and v.get('domains') is not string else v.get('domains', '') }}"
+      placeholder="Registration, Hospitality, Technical Support, Logistics, Security">
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-primary">{{ 'Save changes' if event else 'Create event' }}</button>
+    <a href="{{ url_for('admin.events_list') }}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+<script>
+  initEventLocationMap(
+    'event-map', 'latitude', 'longitude', 'geofence_radius',
+    parseFloat('{{ lat }}'), parseFloat('{{ lng }}'), parseFloat('{{ radius }}')
+  );
+</script>
+{% endblock %}

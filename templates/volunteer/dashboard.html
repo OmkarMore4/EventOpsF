@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block page_title %}Hi, {{ current_user.name.split(' ')[0] }}{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card-hero max-w-lg mx-auto mt-8 text-center">
+  <h2 class="font-display font-bold text-xl text-ink mb-2">Profile not set up yet</h2>
+  <p class="text-sm text-ink/60">Your account isn't linked to a volunteer profile. Please contact your event admin.</p>
+</div>
+{% else %}
+
+<!-- Hero: today's attendance status -->
+<div class="card-hero border-l-4 {{ 'border-l-emerald-500' if today_attendance and today_attendance.check_in else 'border-l-signal' }} mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium text-ink/50 mb-1">Today's attendance</p>
+      {% if not event %}
+        <p class="font-display font-bold text-lg text-ink">No event assigned</p>
+      {% elif today_attendance and today_attendance.check_out %}
+        <p class="font-display font-bold text-lg text-emerald-700">Complete for today</p>
+        <p class="text-sm text-ink/50">Checked in {{ today_attendance.check_in.time|format_datetime('%I:%M %p') }}, out {{ today_attendance.check_out.time|format_datetime('%I:%M %p') }}</p>
+      {% elif today_attendance and today_attendance.check_in %}
+        <p class="font-display font-bold text-lg text-emerald-700">Checked in</p>
+        <p class="text-sm text-ink/50">Since {{ today_attendance.check_in.time|format_datetime('%I:%M %p') }} &mdash; don't forget to check out later.</p>
+      {% else %}
+        <p class="font-display font-bold text-lg text-ink">Not checked in yet</p>
+        <p class="text-sm text-ink/50">Mark your attendance once you're on-site.</p>
+      {% endif %}
+    </div>
+    {% if event %}
+    <a href="{{ url_for('volunteer.attendance_page') }}" class="btn-primary flex-shrink-0">
+      {{ icons.icon('attendance', 'w-4 h-4') }} Go to attendance
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid sm:grid-cols-2 gap-4 mb-6">
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">My tasks</p>
+    <p class="font-display font-bold text-2xl text-ink coord-text">{{ task_pending }} <span class="text-base text-ink/40">pending</span></p>
+    <p class="text-xs text-ink/40 mt-0.5">{{ task_completed }} completed</p>
+  </div>
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">Next on schedule</p>
+    {% if upcoming_schedule %}
+    <p class="font-semibold text-ink">{{ upcoming_schedule.title }}</p>
+    <p class="text-xs text-ink/50">{{ upcoming_schedule.date|format_date }} at {{ upcoming_schedule.start_time|format_time }}</p>
+    {% else %}
+    <p class="text-sm text-ink/40">Nothing scheduled yet</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid sm:grid-cols-2 gap-4">
+  <div class="card">
+    <h3 class="font-semibold text-ink mb-1">My domain</h3>
+    <p class="text-sm text-ink/60 mb-3">{{ volunteer.domain }} &middot; {{ event.name if event else 'No event' }}</p>
+    <p class="text-sm text-ink/70">{{ volunteer.responsibilities or 'No responsibilities listed yet.' }}</p>
+    <a href="{{ url_for('volunteer.profile') }}" class="text-xs font-medium text-signal hover:text-signal-dark mt-3 inline-block">View full profile &rarr;</a>
+  </div>
+  <div class="card">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="font-semibold text-ink">Latest announcements</h3>
+      <a href="{{ url_for('volunteer.schedule_page') }}" class="text-xs font-medium text-signal hover:text-signal-dark">View all &rarr;</a>
+    </div>
+    {% if recent_notifications %}
+    <ul class="space-y-2.5">
+      {% for n in recent_notifications %}
+      <li>
+        <div class="flex items-center gap-2">
+          <span class="badge-pill {{ n.priority|badge_class }}">{{ n.priority }}</span>
+          <p class="text-sm font-medium text-ink truncate">{{ n.title }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-ink/40">No announcements yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

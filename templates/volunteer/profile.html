@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}My profile · {{ app_name }}{% endblock %}
+{% block page_title %}My profile{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Your account isn't linked to a volunteer profile. Contact your event admin.</p></div>
+{% else %}
+<div class="max-w-2xl space-y-5">
+  <div class="card-hero">
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-14 h-14 rounded-full bg-signal-light flex items-center justify-center text-signal font-display font-bold text-xl flex-shrink-0">
+        {{ volunteer.name[0]|upper }}
+      </div>
+      <div>
+        <h2 class="font-display font-bold text-xl text-ink">{{ volunteer.name }}</h2>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="badge-pill bg-ink/5 text-ink/70">{{ volunteer.domain }}</span>
+          <span class="badge-pill {{ volunteer.status|badge_class }}">{{ volunteer.status }}</span>
+        </div>
+      </div>
+    </div>
+    <dl class="grid sm:grid-cols-2 gap-4 text-sm">
+      <div><dt class="text-ink/45 mb-0.5">Email</dt><dd class="text-ink/80">{{ volunteer.email }}</dd></div>
+      <div><dt class="text-ink/45 mb-0.5">Phone</dt><dd class="text-ink/80">{{ volunteer.phone or '—' }}</dd></div>
+      <div><dt class="text-ink/45 mb-0.5">Event</dt><dd class="text-ink/80">{{ event.name if event else '—' }}</dd></div>
+      <div><dt class="text-ink/45 mb-0.5">Joined</dt><dd class="text-ink/80">{{ volunteer.joined_date|format_date }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="card-hero">
+    <h3 class="font-semibold text-ink mb-2">Responsibilities</h3>
+    <p class="text-sm text-ink/70">{{ volunteer.responsibilities or 'No responsibilities have been listed for your domain yet.' }}</p>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div class="card text-center">
+      <p class="font-display font-bold text-2xl text-ink coord-text">{{ task_completed }} / {{ task_total }}</p>
+      <p class="text-xs text-ink/50 mt-1">Tasks completed</p>
+    </div>
+    <div class="card text-center">
+      <p class="font-display font-bold text-2xl text-ink coord-text">{{ attendance_days }}</p>
+      <p class="text-xs text-ink/50 mt-1">Days attended</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

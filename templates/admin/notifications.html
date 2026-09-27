@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Announcements · {{ app_name }}{% endblock %}
+{% block page_title %}Announcements{% endblock %}
+
+{% block content %}
+{% if not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Create an event first to post announcements.</p></div>
+{% else %}
+<div class="flex items-center justify-between mb-5">
+  <p class="text-sm text-ink/60">Volunteers on {{ event.name }} see these on their schedule page.</p>
+  <a href="{{ url_for('admin.notification_create') }}" class="btn-primary">{{ icons.icon('plus', 'w-4 h-4') }} New announcement</a>
+</div>
+
+{% if not notifications %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No announcements posted yet.</p></div>
+{% else %}
+<div class="space-y-3">
+  {% for n in notifications %}
+  <div class="card {{ '' if n.is_active else 'opacity-50' }}">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <h3 class="font-semibold text-ink">{{ n.title }}</h3>
+          <span class="badge-pill {{ n.priority|badge_class }}">{{ n.priority }}</span>
+          {% if not n.is_active %}<span class="badge-pill bg-ink/5 text-ink/50">Hidden</span>{% endif %}
+        </div>
+        <p class="text-sm text-ink/70">{{ n.message }}</p>
+        <p class="text-xs text-ink/40 mt-1.5">{{ n.created_at|format_datetime }}</p>
+      </div>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <a href="{{ url_for('admin.notification_edit', notif_id=n._id) }}" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-ink hover:bg-ink/5">{{ icons.icon('edit', 'w-4 h-4') }}</a>
+        <form method="POST" action="{{ url_for('admin.notification_delete', notif_id=n._id) }}" data-confirm="Delete this announcement?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-rose-600 hover:bg-rose-50">{{ icons.icon('trash', 'w-4 h-4') }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

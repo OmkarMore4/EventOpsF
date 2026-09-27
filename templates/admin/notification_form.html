@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit announcement' if notification else 'New announcement' }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ 'Edit announcement' if notification else 'New announcement' }}{% endblock %}
+
+{% block content %}
+{% set v = values or {} %}
+<form method="POST" class="max-w-xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card-hero space-y-4">
+    <div>
+      <label class="label-field" for="title">Title</label>
+      <input class="input-field" type="text" id="title" name="title" required value="{{ v.get('title', '') }}" placeholder="e.g. Lunch break timing updated">
+    </div>
+    <div>
+      <label class="label-field" for="message">Message</label>
+      <textarea class="textarea-field" id="message" name="message" rows="4" required>{{ v.get('message', '') }}</textarea>
+    </div>
+    <div>
+      <label class="label-field" for="priority">Priority</label>
+      <select class="select-field max-w-xs" id="priority" name="priority">
+        <option value="normal" {{ 'selected' if v.get('priority', 'normal') == 'normal' else '' }}>Normal</option>
+        <option value="important" {{ 'selected' if v.get('priority') == 'important' else '' }}>Important</option>
+        <option value="urgent" {{ 'selected' if v.get('priority') == 'urgent' else '' }}>Urgent</option>
+      </select>
+    </div>
+    {% if notification %}
+    <label class="flex items-center gap-2 text-sm text-ink/70">
+      <input type="checkbox" name="is_active" {{ 'checked' if v.get('is_active', True) else '' }} class="rounded border-ink/20 text-signal focus:ring-signal/40">
+      Visible to volunteers
+    </label>
+    {% endif %}
+  </div>
+  <div class="flex items-center gap-3 mt-5">
+    <button type="submit" class="btn-primary">{{ 'Save changes' if notification else 'Post announcement' }}</button>
+    <a href="{{ url_for('admin.notifications_list') }}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

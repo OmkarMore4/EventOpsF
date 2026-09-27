@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ app_name }}{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#14171C',
+          paper: '#F6F4EF',
+          signal: { DEFAULT: '#D97706', dark: '#B45309', light: '#FDF3E7' },
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          display: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        },
+      },
+    },
+  }
+</script>
+<style type="text/tailwindcss">
+  @layer components {
+    .input-field { @apply w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal placeholder:text-ink/30; }
+    .select-field { @apply w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal cursor-pointer; }
+    .textarea-field { @apply w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal placeholder:text-ink/30 resize-y; }
+    .label-field { @apply block text-sm font-medium text-ink/80 mb-1.5; }
+    .btn-primary { @apply inline-flex items-center justify-center gap-2 bg-signal hover:bg-signal-dark text-white font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply inline-flex items-center justify-center gap-2 bg-white hover:bg-ink/5 text-ink border border-ink/15 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors; }
+    .btn-danger { @apply inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors; }
+    .card { @apply bg-white rounded-xl border border-ink/10 p-5; }
+    .card-hero { @apply bg-white rounded-2xl border border-ink/10 shadow-sm p-6; }
+    .badge-pill { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+{% import '_icons.html' as icons %}
+{% macro nav_link(url, label, icon_name, active, badge=0) %}
+<a href="{{ url }}" class="flex items-center gap-3 pl-3.5 pr-3 py-2.5 rounded-r-lg border-l-2 text-sm font-medium transition-colors {{ 'border-signal bg-white/10 text-white' if active else 'border-transparent text-slate-400 hover:text-white hover:bg-white/5' }}">
+  {{ icons.icon(icon_name, 'w-5 h-5 flex-shrink-0' + (' text-signal' if active else '')) }}
+  <span class="flex-1">{{ label }}</span>
+  {% if badge %}<span class="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-rose-500 text-white leading-none">{{ badge }}</span>{% endif %}
+</a>
+{% endmacro %}
+<body class="h-full bg-paper font-sans text-ink antialiased">
+<div class="flex h-full">
+
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-ink/50 z-30 hidden lg:hidden"></div>
+
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-ink -translate-x-full lg:translate-x-0 transition-transform duration-200 flex flex-col">
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-white/10 flex-shrink-0">
+      <div class="w-8 h-8 rounded-lg bg-signal flex items-center justify-center text-ink font-display font-bold text-sm">E</div>
+      <span class="font-display font-bold text-white text-lg tracking-tight">EventOps</span>
+      <button id="sidebar-close" class="ml-auto lg:hidden text-slate-400 hover:text-white">
+        {{ icons.icon('close', 'w-5 h-5') }}
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      {% if current_user.is_admin %}
+        {{ nav_link(url_for('admin.dashboard'), 'Dashboard', 'dashboard', request.path == url_for('admin.dashboard')) }}
+        {{ nav_link(url_for('admin.events_list'), 'Events', 'events', request.path.startswith('/admin/events')) }}
+        {{ nav_link(url_for('admin.volunteers_list'), 'Volunteers', 'volunteers', request.path.startswith('/admin/volunteers'), nav_pending_volunteers_count) }}
+        {{ nav_link(url_for('admin.tasks_list'), 'Tasks', 'tasks', request.path.startswith('/admin/tasks')) }}
+        {{ nav_link(url_for('admin.attendance_view'), 'Attendance', 'attendance', request.path.startswith('/admin/attendance')) }}
+        {{ nav_link(url_for('admin.equipment_list'), 'Equipment', 'equipment', request.path.startswith('/admin/equipment')) }}
+        {{ nav_link(url_for('admin.schedule_list'), 'Schedule', 'schedule', request.path.startswith('/admin/schedule')) }}
+        {{ nav_link(url_for('admin.issues_list'), 'Issues', 'issues', request.path.startswith('/admin/issues'), nav_open_issues_count) }}
+        {{ nav_link(url_for('admin.notifications_list'), 'Announcements', 'notifications', request.path.startswith('/admin/notifications')) }}
+        {{ nav_link(url_for('admin.reports'), 'Reports', 'reports', request.path.startswith('/admin/reports')) }}
+      {% elif current_user.is_volunteer %}
+        {{ nav_link(url_for('volunteer.dashboard'), 'Dashboard', 'dashboard', request.path == url_for('volunteer.dashboard')) }}
+        {{ nav_link(url_for('volunteer.profile'), 'My profile', 'profile', request.path.startswith('/volunteer/profile')) }}
+        {{ nav_link(url_for('volunteer.attendance_page'), 'Attendance', 'attendance', request.path.startswith('/volunteer/attendance')) }}
+        {{ nav_link(url_for('volunteer.tasks_page'), 'My tasks', 'tasks', request.path.startswith('/volunteer/tasks')) }}
+        {{ nav_link(url_for('volunteer.issues_page'), 'Report an issue', 'issues', request.path.startswith('/volunteer/issues')) }}
+        {{ nav_link(url_for('volunteer.schedule_page'), 'Schedule & news', 'schedule', request.path.startswith('/volunteer/schedule')) }}
+      {% endif %}
+    </nav>
+
+    <div class="border-t border-white/10 p-3 flex-shrink-0">
+      <div class="flex items-center gap-3 px-2 py-2">
+        <div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+          {{ current_user.name[0]|upper if current_user.name else '?' }}
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-white truncate">{{ current_user.name }}</p>
+          <p class="text-xs text-slate-400 capitalize">{{ current_user.role }}</p>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="mt-1 flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+        {{ icons.icon('logout', 'w-5 h-5') }}
+        <span>Log out</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 lg:pl-64">
+    <header class="h-16 flex-shrink-0 flex items-center gap-3 px-4 lg:px-8 border-b border-ink/10 bg-paper/95 backdrop-blur sticky top-0 z-20">
+      <button id="sidebar-open" class="lg:hidden text-ink/70 hover:text-ink">
+        {{ icons.icon('menu', 'w-6 h-6') }}
+      </button>
+      <div class="min-w-0">
+        <h1 class="font-display font-bold text-lg text-ink truncate">{% block page_title %}{% endblock %}</h1>
+      </div>
+
+      {% if current_user.is_admin and nav_all_events %}
+      <form method="POST" action="{{ url_for('admin.event_switch') }}" class="ml-auto flex items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="event-switch" class="hidden sm:inline text-xs font-medium text-ink/50">Event</label>
+        <select id="event-switch" name="event_id" onchange="this.form.submit()"
+          class="text-sm font-medium bg-white border border-ink/15 rounded-lg pl-3 pr-8 py-2 max-w-[11rem] sm:max-w-xs truncate focus:outline-none focus:ring-2 focus:ring-signal/40">
+          {% for ev in nav_all_events %}
+          <option value="{{ ev._id }}" {{ 'selected' if nav_current_event and ev._id == nav_current_event._id else '' }}>{{ ev.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      {% endif %}
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-2 mb-6" id="flash-messages">
+          {% for category, message in messages %}
+          {% set styles = {
+            'success': ('bg-emerald-50 text-emerald-800 border-emerald-200', 'check', 'text-emerald-500'),
+            'error': ('bg-rose-50 text-rose-800 border-rose-200', 'alert', 'text-rose-500'),
+            'info': ('bg-sky-50 text-sky-800 border-sky-200', 'info', 'text-sky-500'),
+            'warning': ('bg-amber-50 text-amber-800 border-amber-200', 'alert', 'text-amber-500'),
+          } %}
+          {% set cls, ic, ic_cls = styles.get(category, styles['info']) %}
+          <div class="flash-alert flex items-start gap-2.5 border rounded-xl px-4 py-3 text-sm font-medium {{ cls }}">
+            {{ icons.icon(ic, 'w-5 h-5 flex-shrink-0 mt-0.5 ' + ic_cls) }}
+            <span class="flex-1">{{ message }}</span>
+            <button type="button" onclick="this.closest('.flash-alert').remove()" class="flex-shrink-0 opacity-50 hover:opacity-100">
+              {{ icons.icon('close', 'w-4 h-4') }}
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

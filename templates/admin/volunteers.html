@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Volunteers · {{ app_name }}{% endblock %}
+{% block page_title %}Volunteers{% endblock %}
+
+{% block content %}
+{% if not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Create an event first to add volunteers.</p></div>
+{% else %}
+
+{% if pending %}
+<div class="card-hero border-l-4 border-l-amber-500 mb-6">
+  <div class="flex items-center gap-2 mb-4">
+    <h2 class="font-display font-bold text-base text-ink">Pending registration requests</h2>
+    <span class="badge-pill bg-amber-100 text-amber-700">{{ pending|length }}</span>
+  </div>
+  <div class="space-y-3">
+    {% for p in pending %}
+    <div class="border border-ink/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div class="min-w-0">
+        <p class="font-medium text-ink">{{ p.name }} <span class="text-ink/40 font-normal">&middot; {{ p.email }}</span></p>
+        <p class="text-xs text-ink/50 mt-0.5">Requested {{ p.created_at|format_datetime }} &middot; wants to help with "{{ p.domain }}"</p>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <form method="POST" action="{{ url_for('admin.volunteer_approve', volunteer_id=p._id) }}" class="flex items-center gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="domain" class="select-field text-xs py-1.5 w-auto">
+            {% for d in event.domains %}
+            <option value="{{ d }}" {{ 'selected' if d == p.domain else '' }}>{{ d }}</option>
+            {% endfor %}
+            {% if p.domain not in event.domains %}<option value="{{ p.domain }}" selected>{{ p.domain }} (custom)</option>{% endif %}
+          </select>
+          <button type="submit" class="btn-primary text-xs px-3 py-1.5">Approve</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.volunteer_reject', volunteer_id=p._id) }}" data-confirm="Decline {{ p.name }}'s request?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-secondary text-xs px-3 py-1.5 text-rose-600 hover:bg-rose-50 hover:border-rose-200">Decline</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flex items-center justify-between mb-5">
+  <p class="text-sm text-ink/60">{{ volunteers|length }} volunteer{{ '' if volunteers|length == 1 else 's' }} on {{ event.name }}.</p>
+  <a href="{{ url_for('admin.volunteer_create') }}" class="btn-primary">{{ icons.icon('plus', 'w-4 h-4') }} Add volunteer</a>
+</div>
+
+{% if not volunteers %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No volunteers yet. Add your first one to get started.</p></div>
+{% else %}
+<div class="card !p-0 overflow-x-auto">
+  <table class="w-full data-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Domain</th><th>Contact</th><th>Tasks</th><th>Status</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in volunteers %}
+      <tr class="hover:bg-ink/[0.02]">
+        <td class="font-medium text-ink">{{ v.name }}</td>
+        <td><span class="badge-pill bg-ink/5 text-ink/70">{{ v.domain }}</span></td>
+        <td class="text-ink/60">
+          <div>{{ v.email }}</div>
+          <div class="text-xs text-ink/40">{{ v.phone }}</div>
+        </td>
+        <td class="coord-text text-ink/70">{{ v.completed_task_count }} / {{ v.task_count }}</td>
+        <td><span class="badge-pill {{ v.status|badge_class }}">{{ v.status }}</span></td>
+        <td class="text-right whitespace-nowrap">
+          <a href="{{ url_for('admin.volunteer_edit', volunteer_id=v._id) }}" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-ink hover:bg-ink/5">{{ icons.icon('edit', 'w-4 h-4') }}</a>
+          <form method="POST" action="{{ url_for('admin.volunteer_delete', volunteer_id=v._id) }}" class="inline" data-confirm="Remove {{ v.name }}? Their task and attendance history will be kept.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-rose-600 hover:bg-rose-50">{{ icons.icon('trash', 'w-4 h-4') }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

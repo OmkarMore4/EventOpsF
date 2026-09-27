@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Attendance · {{ app_name }}{% endblock %}
+{% block page_title %}Attendance{% endblock %}
+
+{% block content %}
+{% if not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Create an event first to track attendance.</p></div>
+{% else %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+  <div class="flex items-center gap-4">
+    <form method="GET" class="flex items-center gap-2">
+      <label for="date" class="text-sm font-medium text-ink/60">Date</label>
+      <input class="input-field w-auto py-2" type="date" id="date" name="date" value="{{ selected_date }}" max="{{ today }}" onchange="this.form.submit()">
+    </form>
+    {% if selected_date != today %}<a href="{{ url_for('admin.attendance_view') }}" class="text-xs font-medium text-signal hover:text-signal-dark">Jump to today</a>{% endif %}
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="{{ url_for('admin.event_qr', event_id=event._id) }}" class="text-xs font-medium text-signal hover:text-signal-dark">{{ icons.icon('gps', 'w-3.5 h-3.5 inline -mt-0.5') }} Backup QR code</a>
+    <p class="text-sm font-medium text-ink/70"><span class="coord-text">{{ present_count }}</span> / <span class="coord-text">{{ total_count }}</span> present</p>
+  </div>
+</div>
+
+{% if not rows %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No volunteers on this event yet.</p></div>
+{% else %}
+{% set method_tags = {'manual': 'manual', 'qr': 'QR'} %}
+<div class="card !p-0 overflow-x-auto">
+  <table class="w-full data-table">
+    <thead><tr><th>Volunteer</th><th>Domain</th><th>Check-in</th><th>Check-out</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="hover:bg-ink/[0.02]">
+        <td class="font-medium text-ink">{{ row.volunteer.name }}</td>
+        <td><span class="badge-pill bg-ink/5 text-ink/70">{{ row.volunteer.domain }}</span></td>
+        <td class="text-sm">
+          {% if row.attendance and row.attendance.check_in %}
+          <span class="text-ink/80">{{ row.attendance.check_in.time|format_datetime('%I:%M %p') }}</span>
+          {% if method_tags.get(row.attendance.check_in.method) %}<span class="text-xs text-ink/40 ml-1">({{ method_tags[row.attendance.check_in.method] }})</span>
+          {% elif row.attendance.check_in.distance_meters is not none %}<span class="coord-text text-xs text-ink/40 ml-1">{{ row.attendance.check_in.distance_meters }}m</span>{% endif %}
+          {% else %}<span class="text-ink/30">&ndash;</span>{% endif %}
+        </td>
+        <td class="text-sm">
+          {% if row.attendance and row.attendance.check_out %}
+          <span class="text-ink/80">{{ row.attendance.check_out.time|format_datetime('%I:%M %p') }}</span>
+          {% if method_tags.get(row.attendance.check_out.method) %}<span class="text-xs text-ink/40 ml-1">({{ method_tags[row.attendance.check_out.method] }})</span>
+          {% elif row.attendance.check_out.distance_meters is not none %}<span class="coord-text text-xs text-ink/40 ml-1">{{ row.attendance.check_out.distance_meters }}m</span>{% endif %}
+          {% else %}<span class="text-ink/30">&ndash;</span>{% endif %}
+        </td>
+        <td><span class="badge-pill {{ row.status|badge_class }}">{{ row.status.replace('-', ' ') }}</span></td>
+        <td class="text-right">
+          {% if selected_date == today and row.status != 'checked-out' %}
+          <form method="POST" action="{{ url_for('admin.attendance_manual') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="volunteer_id" value="{{ row.volunteer._id }}">
+            <button type="submit" class="text-xs font-medium text-signal hover:text-signal-dark whitespace-nowrap">
+              {{ 'Mark checked out' if row.status == 'present' else 'Mark present' }}
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-xs text-ink/40 mt-3">"(manual)" entries were marked by an admin and skip the geofence check; "(QR)" entries came from a volunteer scanning the venue's printed backup code. Use both sparingly &mdash; GPS is the primary, verified method.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

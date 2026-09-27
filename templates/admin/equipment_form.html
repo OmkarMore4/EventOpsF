@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit equipment' if item else 'Add equipment' }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ 'Edit equipment' if item else 'Add equipment' }}{% endblock %}
+
+{% block content %}
+{% set v = values or {} %}
+<form method="POST" class="max-w-xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card-hero space-y-4">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="name">Item name</label>
+        <input class="input-field" type="text" id="name" name="name" required value="{{ v.get('name', '') }}" placeholder="e.g. Wireless Microphones">
+      </div>
+      <div>
+        <label class="label-field" for="category">Category</label>
+        <input class="input-field" type="text" id="category" name="category" value="{{ v.get('category', '') }}" placeholder="e.g. Electronics">
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="total_quantity">Total quantity</label>
+        <input class="input-field coord-text" type="number" min="0" step="1" id="total_quantity" name="total_quantity" required value="{{ v.get('total_quantity', 0) }}">
+      </div>
+      <div>
+        <label class="label-field" for="assigned_quantity">Currently in use</label>
+        <input class="input-field coord-text" type="number" min="0" step="1" id="assigned_quantity" name="assigned_quantity" value="{{ v.get('assigned_quantity', 0) }}">
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="condition">Condition</label>
+        <select class="select-field" id="condition" name="condition">
+          <option value="Good" {{ 'selected' if v.get('condition', 'Good') == 'Good' else '' }}>Good</option>
+          <option value="Under Repair" {{ 'selected' if v.get('condition') == 'Under Repair' else '' }}>Under repair</option>
+          <option value="Damaged" {{ 'selected' if v.get('condition') == 'Damaged' else '' }}>Damaged</option>
+        </select>
+      </div>
+      <div>
+        <label class="label-field" for="assigned_to">Assigned to (team/domain)</label>
+        <input class="input-field" type="text" id="assigned_to" name="assigned_to" value="{{ v.get('assigned_to', '') }}" placeholder="Optional">
+      </div>
+    </div>
+    <div>
+      <label class="label-field" for="notes">Notes</label>
+      <textarea class="textarea-field" id="notes" name="notes" rows="2">{{ v.get('notes', '') }}</textarea>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 mt-5">
+    <button type="submit" class="btn-primary">{{ 'Save changes' if item else 'Add equipment' }}</button>
+    <a href="{{ url_for('admin.equipment_list') }}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

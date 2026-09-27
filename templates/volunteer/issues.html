@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Report an issue · {{ app_name }}{% endblock %}
+{% block page_title %}Report an issue{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Your account isn't linked to a volunteer profile. Contact your event admin.</p></div>
+{% else %}
+
+<div class="grid lg:grid-cols-2 gap-5">
+  <div class="card-hero self-start">
+    <h2 class="font-display font-bold text-base text-ink mb-4">New report</h2>
+    <form method="POST" action="{{ url_for('volunteer.report_issue') }}" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <label class="label-field" for="title">Title</label>
+        <input class="input-field" type="text" id="title" name="title" required placeholder="Short summary of the issue">
+      </div>
+      <div>
+        <label class="label-field" for="description">Description</label>
+        <textarea class="textarea-field" id="description" name="description" rows="4" required placeholder="What happened, and where?"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label-field" for="category">Category</label>
+          <select class="select-field" id="category" name="category">
+            <option value="Equipment">Equipment</option>
+            <option value="Facilities">Facilities</option>
+            <option value="Logistics">Logistics</option>
+            <option value="Security">Security</option>
+            <option value="Other" selected>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-field" for="priority">Priority</label>
+          <select class="select-field" id="priority" name="priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary w-full sm:w-auto">Submit report</button>
+    </form>
+  </div>
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-4">Your reports</h2>
+    {% if not issues %}
+    <p class="text-sm text-ink/40 text-center py-6">You haven't reported any issues yet.</p>
+    {% else %}
+    <ul class="space-y-3">
+      {% for issue in issues %}
+      <li class="border border-ink/8 rounded-xl p-3.5">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <p class="text-sm font-semibold text-ink">{{ issue.title }}</p>
+          <span class="badge-pill {{ issue.status|badge_class }} flex-shrink-0">{{ issue.status.replace('-', ' ') }}</span>
+        </div>
+        <p class="text-xs text-ink/50 mb-1.5">{{ issue.category }} &middot; {{ issue.created_at|format_datetime }}</p>
+        <p class="text-sm text-ink/60">{{ issue.description }}</p>
+        {% if issue.admin_response %}
+        <div class="mt-2 pt-2 border-t border-ink/8">
+          <p class="text-xs font-medium text-ink/50 mb-0.5">Admin response</p>
+          <p class="text-sm text-ink/70">{{ issue.admin_response }}</p>
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

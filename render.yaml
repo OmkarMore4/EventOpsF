@@ -1,0 +1,30 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Lets you deploy EventOps on Render with "New > Blueprint" instead of
+# configuring the web service by hand. MongoDB itself is NOT hosted here —
+# point MONGO_URI at a free MongoDB Atlas cluster (see README.md).
+#
+# After the first sync, set MONGO_URI in the Render Dashboard
+# (Environment tab) — it's intentionally left out of this file so no
+# database credentials ever get committed to the repo.
+
+services:
+  - type: web
+    name: eventops
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: DB_NAME
+        value: eventops
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: DEFAULT_GEOFENCE_RADIUS_METERS
+        value: "100"

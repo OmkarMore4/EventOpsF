@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if not event %}
+  <div class="card-hero max-w-lg mx-auto mt-8 text-center">
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-signal-light flex items-center justify-center mb-4">
+      {{ icons.icon('events', 'w-7 h-7 text-signal') }}
+    </div>
+    <h2 class="font-display font-bold text-xl text-ink mb-2">Create your first event</h2>
+    <p class="text-sm text-ink/60 mb-5">Set a venue, geofence radius and volunteer domains to unlock attendance tracking, tasks, and the rest of EventOps.</p>
+    <a href="{{ url_for('admin.event_create') }}" class="btn-primary">
+      {{ icons.icon('plus', 'w-4 h-4') }} Create an event
+    </a>
+  </div>
+{% else %}
+
+  <div id="live-dashboard-root" data-live-url="{{ url_for('admin.dashboard_live') }}">
+
+  <!-- Hero: live presence -->
+  <div class="card-hero border-l-4 border-l-signal mb-6">
+    <div class="flex flex-col md:flex-row md:items-center gap-6">
+      <div class="flex-shrink-0">
+        <div class="flex items-center gap-2 mb-1">
+          <p class="text-sm font-medium text-ink/50">Present right now</p>
+          <span class="live-dot" aria-hidden="true"></span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="live-present-count" class="font-display font-bold text-5xl text-ink coord-text">{{ present_today }}</span>
+          <span class="text-xl text-ink/40 coord-text">/ {{ total_volunteers }}</span>
+        </div>
+        <div class="w-40 h-1.5 rounded-full bg-ink/10 mt-3 overflow-hidden">
+          <div id="live-present-bar" class="h-full bg-signal rounded-full transition-all duration-500" style="width: {{ ((present_today / total_volunteers * 100) if total_volunteers else 0)|round(0, 'floor') }}%"></div>
+        </div>
+        <p id="live-updated-at" class="text-xs text-ink/30 mt-2">Updated just now</p>
+      </div>
+      <div class="flex-1 md:border-l md:border-ink/10 md:pl-6">
+        <div class="flex items-center gap-2 mb-1.5">
+          <h2 class="font-display font-bold text-lg text-ink">{{ event.name }}</h2>
+          <span class="badge-pill {{ event|event_status|badge_class }}">{{ event|event_status|capitalize }}</span>
+        </div>
+        <p class="text-sm text-ink/60">{{ event.venue }} &middot; {{ event.start_date|format_date }} &ndash; {{ event.end_date|format_date }}</p>
+        <p class="text-sm text-ink/60 mt-1">Geofence radius: <span class="coord-text font-medium text-ink/80">{{ event.geofence_radius }}m</span></p>
+      </div>
+      <a href="{{ url_for('admin.event_edit', event_id=event._id) }}" class="btn-secondary flex-shrink-0 self-start">
+        {{ icons.icon('edit', 'w-4 h-4') }} Edit event
+      </a>
+    </div>
+  </div>
+
+  <!-- Secondary stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="card">
+      <p class="text-xs font-medium text-ink/50 mb-1">Volunteers</p>
+      <p class="font-display font-bold text-2xl text-ink">{{ total_volunteers }}</p>
+    </div>
+    <div class="card">
+      <p class="text-xs font-medium text-ink/50 mb-1">Pending tasks</p>
+      <p id="live-pending-tasks" class="font-display font-bold text-2xl text-ink">{{ pending_tasks }}</p>
+      <p class="text-xs text-ink/40 mt-0.5">{{ completed_tasks }} completed</p>
+    </div>
+    <div class="card">
+      <p class="text-xs font-medium text-ink/50 mb-1">Open issues</p>
+      <p id="live-open-issues" class="font-display font-bold text-2xl {{ 'text-rose-600' if open_issues else 'text-ink' }}">{{ open_issues }}</p>
+    </div>
+    <div class="card">
+      <p class="text-xs font-medium text-ink/50 mb-1">Equipment items</p>
+      <p class="font-display font-bold text-2xl text-ink">{{ total_equipment }}</p>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid lg:grid-cols-3 gap-4 mb-6">
+    <div class="card lg:col-span-2">
+      <p class="text-sm font-semibold text-ink mb-3">Attendance, last 7 days</p>
+      <div class="chart-box"><canvas id="trend-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <p class="text-sm font-semibold text-ink mb-3">Task status</p>
+      <div class="chart-box"><canvas id="task-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-4">
+    <div class="card">
+      <p class="text-sm font-semibold text-ink mb-3">Volunteers by domain</p>
+      <div class="chart-box" style="height: {{ [domain_labels|length * 42, 120]|max }}px;"><canvas id="domain-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-sm font-semibold text-ink">Open issues</p>
+        <a href="{{ url_for('admin.issues_list') }}" class="text-xs font-medium text-signal hover:text-signal-dark">View all &rarr;</a>
+      </div>
+      {% if recent_issues %}
+      <ul class="divide-y divide-ink/6">
+        {% for issue in recent_issues %}
+        <li class="py-2.5 first:pt-0 last:pb-0">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-ink truncate">{{ issue.title }}</p>
+              <p class="text-xs text-ink/50">{{ issue.reported_by_name }} &middot; {{ issue.category }}</p>
+            </div>
+            <span class="badge-pill {{ issue.status|badge_class }} flex-shrink-0">{{ issue.status }}</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-sm text-ink/40 py-4 text-center">No open issues. All clear.</p>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="flex items-center gap-2 mb-3">
+        <p class="text-sm font-semibold text-ink">Live activity</p>
+        <span class="live-dot" aria-hidden="true"></span>
+      </div>
+      <ul id="live-activity-feed">
+        <li class="text-sm text-ink/40 py-4 text-center list-none">Loading&hellip;</li>
+      </ul>
+    </div>
+  </div>
+
+  </div><!-- /live-dashboard-root -->
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if event %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/live_dashboard.js') }}"></script>
+<script>
+  initDashboardCharts({
+    trendLabels: {{ trend_labels|tojson }},
+    trendValues: {{ trend_values|tojson }},
+    taskLabels: {{ task_labels|tojson }},
+    taskValues: {{ task_values|tojson }},
+    domainLabels: {{ domain_labels|tojson }},
+    domainValues: {{ domain_values|tojson }},
+  });
+</script>
+{% endif %}
+{% endblock %}

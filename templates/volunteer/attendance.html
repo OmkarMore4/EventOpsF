@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Attendance · {{ app_name }}{% endblock %}
+{% block page_title %}Attendance{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Your account isn't linked to a volunteer profile. Contact your event admin.</p></div>
+{% elif not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No event is associated with your profile yet. Contact your event admin.</p></div>
+{% else %}
+
+<div class="grid lg:grid-cols-2 gap-5 mb-6">
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-1">Mark attendance</h2>
+    <p class="text-sm text-ink/60 mb-4">
+      You must be within <span class="coord-text font-medium">{{ event.geofence_radius }}m</span> of {{ event.venue }} for this to succeed.
+    </p>
+
+    {% if not within_event_dates %}
+    <div class="flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm">
+      {{ icons.icon('info', 'w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500') }}
+      <span>Attendance can only be marked during the event dates ({{ event.start_date|format_date }} &ndash; {{ event.end_date|format_date }}).</span>
+    </div>
+    {% elif today_attendance and today_attendance.check_out %}
+    <div class="flex items-start gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 text-sm">
+      {{ icons.icon('check', 'w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500') }}
+      <span>You've completed attendance for today &mdash; checked in {{ today_attendance.check_in.time|format_datetime('%I:%M %p') }}, out {{ today_attendance.check_out.time|format_datetime('%I:%M %p') }}.</span>
+    </div>
+    {% else %}
+    <button type="button" id="mark-attendance-btn"
+      data-event-lat="{{ event_lat }}" data-event-lng="{{ event_lng }}" data-radius="{{ event.geofence_radius }}"
+      class="btn-primary w-full sm:w-auto">
+      {{ icons.icon('gps', 'w-4 h-4') }}
+      {{ 'Check out' if (today_attendance and today_attendance.check_in) else 'Check in now' }}
+    </button>
+    <p id="location-status" class="text-sm mt-3"></p>
+    <p class="text-xs text-ink/40 mt-2">GPS not working (common indoors)? Ask your event admin for the venue's backup QR code.</p>
+
+    <form id="attendance-form" method="POST" action="{{ url_for('volunteer.mark_attendance') }}" class="hidden">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" id="latitude" name="latitude">
+      <input type="hidden" id="longitude" name="longitude">
+      <input type="hidden" id="accuracy" name="accuracy">
+    </form>
+    {% endif %}
+
+    {% if today_attendance %}
+    <div class="mt-5 pt-4 border-t border-ink/8 text-sm space-y-1.5">
+      <div class="flex justify-between"><span class="text-ink/50">Check-in</span>
+        <span class="text-ink/80">{{ today_attendance.check_in.time|format_datetime('%I:%M %p') if today_attendance.check_in else 'Not yet' }}</span></div>
+      <div class="flex justify-between"><span class="text-ink/50">Check-out</span>
+        <span class="text-ink/80">{{ today_attendance.check_out.time|format_datetime('%I:%M %p') if today_attendance.check_out else 'Not yet' }}</span></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card-hero">
+    <h2 class="font-display font-bold text-base text-ink mb-3">Geofence map</h2>
+    <div id="geofence-map" class="map-box border border-ink/10"></div>
+    <p class="text-xs text-ink/40 mt-2">The shaded circle is the allowed check-in area. Your marker appears once you mark attendance.</p>
+  </div>
+</div>
+
+<div class="card-hero">
+  <h2 class="font-display font-bold text-base text-ink mb-4">Attendance history</h2>
+  {% if not history %}
+  <p class="text-sm text-ink/40 text-center py-6">No attendance recorded yet.</p>
+  {% else %}
+  <div class="overflow-x-auto -mx-6">
+    <table class="w-full data-table">
+      <thead><tr><th>Date</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for record in history %}
+        <tr>
+          <td class="font-medium text-ink">{{ record.date|format_date }}</td>
+          <td class="text-sm text-ink/70">
+            {% if record.check_in %}{{ record.check_in.time|format_datetime('%I:%M %p') }}
+              <span class="coord-text text-xs text-ink/40">({{ record.check_in.distance_meters }}m)</span>
+            {% else %}<span class="text-ink/30">&ndash;</span>{% endif %}
+          </td>
+          <td class="text-sm text-ink/70">
+            {% if record.check_out %}{{ record.check_out.time|format_datetime('%I:%M %p') }}
+              <span class="coord-text text-xs text-ink/40">({{ record.check_out.distance_meters }}m)</span>
+            {% else %}<span class="text-ink/30">&ndash;</span>{% endif %}
+          </td>
+          <td><span class="badge-pill {{ ('checked-out' if record.check_out else 'present')|badge_class }}">{{ 'Checked out' if record.check_out else 'Present' }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}
