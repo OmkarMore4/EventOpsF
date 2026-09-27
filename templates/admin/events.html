@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Events · {{ app_name }}{% endblock %}
+{% block page_title %}Events{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <p class="text-sm text-ink/60">{{ events|length }} event{{ '' if events|length == 1 else 's' }} total. The active event drives every other section in the sidebar.</p>
+  <a href="{{ url_for('admin.event_create') }}" class="btn-primary flex-shrink-0">
+    {{ icons.icon('plus', 'w-4 h-4') }} New event
+  </a>
+</div>
+
+{% if not events %}
+<div class="card text-center py-12">
+  <p class="text-sm text-ink/50">No events yet. Create one to get started.</p>
+</div>
+{% else %}
+<div class="space-y-4">
+  {% for ev in events %}
+  <div class="card-hero {{ 'border-l-4 border-l-signal' if current_id == ev._id|string else '' }}">
+    <div class="flex flex-col md:flex-row md:items-start gap-4 justify-between">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+          <h3 class="font-display font-bold text-lg text-ink">{{ ev.name }}</h3>
+          <span class="badge-pill {{ ev|event_status|badge_class }}">{{ ev|event_status|capitalize }}</span>
+          {% if current_id == ev._id|string %}<span class="badge-pill bg-signal-light text-signal-dark">Active in sidebar</span>{% endif %}
+        </div>
+        <p class="text-sm text-ink/60 mb-2">{{ ev.description }}</p>
+        <p class="text-sm text-ink/70">{{ ev.venue }} &middot; {{ ev.start_date|format_date }} &ndash; {{ ev.end_date|format_date }} &middot; geofence <span class="coord-text">{{ ev.geofence_radius }}m</span></p>
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          {% for domain in ev.domains %}
+          <span class="badge-pill bg-ink/5 text-ink/70">{{ domain }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="flex flex-row md:flex-col gap-2 flex-shrink-0">
+        {% if current_id != ev._id|string %}
+        <form method="POST" action="{{ url_for('admin.event_switch') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="event_id" value="{{ ev._id }}">
+          <button type="submit" class="btn-secondary text-xs px-3 py-2 w-full">Set active</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('admin.event_edit', event_id=ev._id) }}" class="btn-secondary text-xs px-3 py-2">
+          {{ icons.icon('edit', 'w-3.5 h-3.5') }} Edit
+        </a>
+        <a href="{{ url_for('admin.event_qr', event_id=ev._id) }}" class="btn-secondary text-xs px-3 py-2">
+          {{ icons.icon('gps', 'w-3.5 h-3.5') }} QR code
+        </a>
+        <form method="POST" action="{{ url_for('admin.event_delete', event_id=ev._id) }}" data-confirm="Delete &quot;{{ ev.name }}&quot; and ALL its volunteers, tasks, attendance, and other data? This can't be undone.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-secondary text-xs px-3 py-2 w-full text-rose-600 hover:bg-rose-50 hover:border-rose-200">
+            {{ icons.icon('trash', 'w-3.5 h-3.5') }} Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

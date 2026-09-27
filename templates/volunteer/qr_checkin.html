@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}{{ action_label }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ action_label }} via QR code{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="card-hero text-center">
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-signal-light flex items-center justify-center mb-4">
+      {{ icons.icon('gps', 'w-7 h-7 text-signal') }}
+    </div>
+    <h2 class="font-display font-bold text-xl text-ink mb-2">{{ event.name }}</h2>
+    <p class="text-sm text-ink/60 mb-6">
+      You scanned the venue's backup check-in code. Since reaching this page means you're
+      physically at the venue, this skips the GPS check.
+    </p>
+
+    <form method="POST" action="{{ url_for('volunteer.qr_checkin_submit', event_id=event_id, secret=secret) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-primary w-full">{{ action_label }} now</button>
+    </form>
+    <a href="{{ url_for('volunteer.attendance_page') }}" class="text-xs text-ink/40 hover:text-ink/60 mt-3 inline-block">Cancel and go back</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Reports · {{ app_name }}{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+{% if not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Create an event first to generate reports.</p></div>
+{% else %}
+<p class="text-sm text-ink/60 mb-5">Summary and exports for {{ event.name }}.</p>
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">Volunteers</p>
+    <p class="font-display font-bold text-2xl text-ink coord-text">{{ total_volunteers }}</p>
+  </div>
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">Attendance records</p>
+    <p class="font-display font-bold text-2xl text-ink coord-text">{{ total_attendance_records }}</p>
+  </div>
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">Tasks completed</p>
+    <p class="font-display font-bold text-2xl text-ink coord-text">{{ completed_tasks }} <span class="text-base text-ink/40">/ {{ total_tasks }}</span></p>
+  </div>
+  <div class="card">
+    <p class="text-xs font-medium text-ink/50 mb-1">Issues resolved</p>
+    <p class="font-display font-bold text-2xl text-ink coord-text">{{ resolved_issues }} <span class="text-base text-ink/40">/ {{ total_issues }}</span></p>
+  </div>
+</div>
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="card-hero">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-signal-light flex items-center justify-center flex-shrink-0">{{ icons.icon('reports', 'w-5 h-5 text-signal') }}</div>
+      <div>
+        <h3 class="font-semibold text-ink mb-1">Full event report</h3>
+        <p class="text-sm text-ink/60 mb-4">A single polished PDF with event details, summary stats, attendance and tasks &mdash; ready to hand to someone.</p>
+        <a href="{{ url_for('admin.export_event_report_pdf') }}" class="btn-secondary text-sm">{{ icons.icon('download', 'w-4 h-4') }} Export PDF</a>
+      </div>
+    </div>
+  </div>
+  <div class="card-hero">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-signal-light flex items-center justify-center flex-shrink-0">{{ icons.icon('attendance', 'w-5 h-5 text-signal') }}</div>
+      <div>
+        <h3 class="font-semibold text-ink mb-1">Attendance report</h3>
+        <p class="text-sm text-ink/60 mb-4">Every check-in and check-out, with GPS coordinates, distance from venue, and the method used (GPS, manual, or QR).</p>
+        <a href="{{ url_for('admin.export_attendance_csv') }}" class="btn-secondary text-sm">{{ icons.icon('download', 'w-4 h-4') }} Export CSV</a>
+      </div>
+    </div>
+  </div>
+  <div class="card-hero">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-signal-light flex items-center justify-center flex-shrink-0">{{ icons.icon('tasks', 'w-5 h-5 text-signal') }}</div>
+      <div>
+        <h3 class="font-semibold text-ink mb-1">Task report</h3>
+        <p class="text-sm text-ink/60 mb-4">Every task with its domain, assignee, priority, status and due date.</p>
+        <a href="{{ url_for('admin.export_tasks_csv') }}" class="btn-secondary text-sm">{{ icons.icon('download', 'w-4 h-4') }} Export CSV</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

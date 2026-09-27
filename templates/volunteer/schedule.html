@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Schedule & news · {{ app_name }}{% endblock %}
+{% block page_title %}Schedule & announcements{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Your account isn't linked to a volunteer profile. Contact your event admin.</p></div>
+{% elif not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No event is associated with your profile yet.</p></div>
+{% else %}
+
+<div class="grid lg:grid-cols-3 gap-5">
+  <div class="lg:col-span-2">
+    <h2 class="font-display font-bold text-base text-ink mb-4">Event schedule</h2>
+    {% if not items %}
+    <div class="card text-center py-10"><p class="text-sm text-ink/40">No schedule published yet.</p></div>
+    {% else %}
+    {% set ns = namespace(current_date='') %}
+    <div class="space-y-3">
+      {% for item in items %}
+        {% if item.date != ns.current_date %}
+          {% set ns.current_date = item.date %}
+          <p class="text-xs font-semibold text-ink/50 uppercase tracking-wide {{ '' if loop.first else 'pt-3' }}">{{ item.date|format_date('%A, %d %B %Y') }}</p>
+        {% endif %}
+        <div class="card flex gap-4">
+          <div class="text-center flex-shrink-0 w-16">
+            <p class="font-display font-bold text-sm text-ink coord-text">{{ item.start_time|format_time }}</p>
+            {% if item.end_time %}<p class="text-xs text-ink/40 coord-text">{{ item.end_time|format_time }}</p>{% endif %}
+          </div>
+          <div class="min-w-0 border-l border-ink/10 pl-4">
+            <div class="flex items-center gap-2 mb-0.5">
+              <h3 class="font-semibold text-ink">{{ item.title }}</h3>
+              <span class="badge-pill bg-ink/5 text-ink/60">{{ item.type }}</span>
+            </div>
+            {% if item.venue %}<p class="text-sm text-ink/50">{{ item.venue }}</p>{% endif %}
+            {% if item.description %}<p class="text-sm text-ink/60 mt-1">{{ item.description }}</p>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <h2 class="font-display font-bold text-base text-ink mb-4">Announcements</h2>
+    {% if not notifications %}
+    <div class="card text-center py-10"><p class="text-sm text-ink/40">No announcements yet.</p></div>
+    {% else %}
+    <div class="space-y-3">
+      {% for n in notifications %}
+      <div class="card">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="badge-pill {{ n.priority|badge_class }}">{{ n.priority }}</span>
+          <p class="text-xs text-ink/40">{{ n.created_at|format_datetime }}</p>
+        </div>
+        <p class="text-sm font-semibold text-ink mb-1">{{ n.title }}</p>
+        <p class="text-sm text-ink/65">{{ n.message }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Tasks · {{ app_name }}{% endblock %}
+{% block page_title %}Tasks{% endblock %}
+
+{% block content %}
+{% if not event %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Create an event first to assign tasks.</p></div>
+{% else %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+  <form method="GET" class="flex flex-wrap items-center gap-2">
+    <select name="status" onchange="this.form.submit()" class="select-field text-sm py-2 w-auto">
+      <option value="" {{ 'selected' if not status_filter else '' }}>All statuses</option>
+      <option value="pending" {{ 'selected' if status_filter == 'pending' else '' }}>Pending</option>
+      <option value="in-progress" {{ 'selected' if status_filter == 'in-progress' else '' }}>In progress</option>
+      <option value="completed" {{ 'selected' if status_filter == 'completed' else '' }}>Completed</option>
+    </select>
+    <select name="domain" onchange="this.form.submit()" class="select-field text-sm py-2 w-auto">
+      <option value="" {{ 'selected' if not domain_filter else '' }}>All domains</option>
+      {% for d in event.domains %}
+      <option value="{{ d }}" {{ 'selected' if domain_filter == d else '' }}>{{ d }}</option>
+      {% endfor %}
+    </select>
+    {% if status_filter or domain_filter %}<a href="{{ url_for('admin.tasks_list') }}" class="text-xs font-medium text-ink/50 hover:text-ink">Clear filters</a>{% endif %}
+  </form>
+  <a href="{{ url_for('admin.task_create') }}" class="btn-primary">{{ icons.icon('plus', 'w-4 h-4') }} New task</a>
+</div>
+
+{% if not tasks %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No tasks match. {{ 'Try clearing filters or add one.' if (status_filter or domain_filter) else 'Create your first task to get started.' }}</p></div>
+{% else %}
+<div class="card !p-0 overflow-x-auto">
+  <table class="w-full data-table">
+    <thead><tr><th>Task</th><th>Assigned to</th><th>Domain</th><th>Priority</th><th>Due</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr class="hover:bg-ink/[0.02]">
+        <td>
+          <p class="font-medium text-ink">{{ t.title }}</p>
+          {% if t.description %}<p class="text-xs text-ink/45 max-w-xs truncate">{{ t.description }}</p>{% endif %}
+        </td>
+        <td class="text-ink/70">{{ t.assigned_to_name or '—' }}</td>
+        <td><span class="badge-pill bg-ink/5 text-ink/70">{{ t.domain or '—' }}</span></td>
+        <td><span class="badge-pill {{ t.priority|badge_class }}">{{ t.priority }}</span></td>
+        <td class="text-ink/60 text-sm">{{ t.due_date|format_date if t.due_date else '—' }}</td>
+        <td><span class="badge-pill {{ t.status|badge_class }}">{{ t.status.replace('-', ' ') }}</span></td>
+        <td class="text-right whitespace-nowrap">
+          <a href="{{ url_for('admin.task_edit', task_id=t._id) }}" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-ink hover:bg-ink/5">{{ icons.icon('edit', 'w-4 h-4') }}</a>
+          <form method="POST" action="{{ url_for('admin.task_delete', task_id=t._id) }}" class="inline" data-confirm="Delete task &quot;{{ t.title }}&quot;?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="inline-flex p-1.5 rounded-lg text-ink/40 hover:text-rose-600 hover:bg-rose-50">{{ icons.icon('trash', 'w-4 h-4') }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

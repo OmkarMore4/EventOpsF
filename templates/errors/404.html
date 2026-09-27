@@ -1,0 +1,17 @@
+{% extends "base_auth.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Page not found · {{ app_name }}{% endblock %}
+{% block guest_content %}
+<div class="min-h-full flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md text-center">
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-white/10 flex items-center justify-center mb-5">
+      {{ icons.icon('info', 'w-8 h-8 text-slate-300') }}
+    </div>
+    <h1 class="font-display font-bold text-2xl text-white mb-2">404 — Page not found</h1>
+    <p class="text-slate-400 text-sm mb-6">That page doesn't exist, or the item may have been deleted.</p>
+    <a href="{{ url_for('auth.index') }}" class="inline-flex items-center justify-center bg-signal hover:bg-signal-dark text-white font-semibold text-sm rounded-lg px-5 py-2.5 transition-colors">
+      Take me home
+    </a>
+  </div>
+</div>
+{% endblock %}

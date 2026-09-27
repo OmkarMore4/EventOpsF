@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}My tasks · {{ app_name }}{% endblock %}
+{% block page_title %}My tasks{% endblock %}
+
+{% block content %}
+{% if not volunteer %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">Your account isn't linked to a volunteer profile. Contact your event admin.</p></div>
+{% elif not tasks %}
+<div class="card text-center py-12"><p class="text-sm text-ink/50">No tasks assigned to you yet.</p></div>
+{% else %}
+<div class="space-y-4">
+  {% for t in tasks %}
+  <div class="card-hero">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="font-semibold text-ink">{{ t.title }}</h3>
+          <span class="badge-pill {{ t.priority|badge_class }}">{{ t.priority }} priority</span>
+          {% if t.domain %}<span class="badge-pill bg-ink/5 text-ink/60">{{ t.domain }}</span>{% endif %}
+        </div>
+        {% if t.due_date %}<p class="text-xs text-ink/45 mt-0.5">Due {{ t.due_date|format_date }}</p>{% endif %}
+      </div>
+      <span class="badge-pill {{ t.status|badge_class }} flex-shrink-0">{{ t.status.replace('-', ' ') }}</span>
+    </div>
+    {% if t.description %}<p class="text-sm text-ink/70 mb-4">{{ t.description }}</p>{% endif %}
+
+    <form method="POST" action="{{ url_for('volunteer.update_task_status', task_id=t._id) }}" class="border-t border-ink/8 pt-4 flex items-center gap-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="status-{{ t._id }}" class="text-sm text-ink/50">Status</label>
+      <select id="status-{{ t._id }}" name="status" onchange="this.form.submit()" class="select-field w-auto text-sm py-2">
+        <option value="pending" {{ 'selected' if t.status == 'pending' else '' }}>Pending</option>
+        <option value="in-progress" {{ 'selected' if t.status == 'in-progress' else '' }}>In progress</option>
+        <option value="completed" {{ 'selected' if t.status == 'completed' else '' }}>Completed</option>
+      </select>
+      <noscript><button type="submit" class="btn-secondary text-sm">Update</button></noscript>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

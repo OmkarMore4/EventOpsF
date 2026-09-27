@@ -1,0 +1,97 @@
+{% extends "base_auth.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Volunteer sign-up · {{ app_name }}{% endblock %}
+{% block guest_content %}
+{% set v = values or {} %}
+<div class="min-h-full flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-lg">
+
+    <div class="flex items-center justify-center gap-2.5 mb-8">
+      <div class="w-10 h-10 rounded-xl bg-signal flex items-center justify-center text-ink font-display font-bold text-lg">E</div>
+      <span class="font-display font-bold text-white text-2xl tracking-tight">EventOps</span>
+    </div>
+
+    <div class="bg-paper rounded-2xl shadow-xl p-8">
+      <h1 class="font-display font-bold text-xl text-ink mb-1">Volunteer sign-up</h1>
+      <p class="text-sm text-ink/60 mb-6">Submit your details and the event admin will review your request.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-2 mb-5">
+          {% for category, message in messages %}
+          {% set is_error = category == 'error' %}
+          <div class="flex items-start gap-2.5 border rounded-xl px-4 py-3 text-sm font-medium {{ 'bg-rose-50 text-rose-800 border-rose-200' if is_error else 'bg-emerald-50 text-emerald-800 border-emerald-200' }}">
+            {{ icons.icon('alert' if is_error else 'check', 'w-5 h-5 flex-shrink-0 mt-0.5 ' + ('text-rose-500' if is_error else 'text-emerald-500')) }}
+            <span>{{ message }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      {% if not events %}
+      <p class="text-sm text-ink/60">There are no events currently open for volunteer sign-ups. Please check back later, or ask the organizer directly.</p>
+      {% else %}
+      <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+          <label for="event_id" class="block text-sm font-medium text-ink/80 mb-1.5">Event</label>
+          <select id="event_id" name="event_id" required class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+            <option value="" disabled {{ 'selected' if not v.get('event_id') else '' }}>Select an event</option>
+            {% for ev in events %}
+            <option value="{{ ev._id }}" {{ 'selected' if v.get('event_id') == ev._id|string else '' }}>{{ ev.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-ink/80 mb-1.5">Full name</label>
+            <input type="text" id="name" name="name" required value="{{ v.get('name', '') }}"
+              class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+          </div>
+          <div>
+            <label for="phone" class="block text-sm font-medium text-ink/80 mb-1.5">Phone</label>
+            <input type="tel" id="phone" name="phone" value="{{ v.get('phone', '') }}"
+              class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-ink/80 mb-1.5">Email</label>
+          <input type="email" id="email" name="email" required value="{{ v.get('email', '') }}"
+            class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+        </div>
+
+        <div>
+          <label for="domain" class="block text-sm font-medium text-ink/80 mb-1.5">Which team would you like to help with?</label>
+          <input type="text" id="domain" name="domain" required value="{{ v.get('domain', '') }}" placeholder="e.g. Registration, Hospitality, Technical Support"
+            class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+          <p class="text-xs text-ink/40 mt-1">The admin can adjust this when reviewing your request.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="username" class="block text-sm font-medium text-ink/80 mb-1.5">Choose a username</label>
+            <input type="text" id="username" name="username" required value="{{ v.get('username', '') }}" autocomplete="off"
+              class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+          </div>
+          <div>
+            <label for="password" class="block text-sm font-medium text-ink/80 mb-1.5">Choose a password</label>
+            <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password"
+              class="w-full rounded-lg border border-ink/15 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40 focus:border-signal">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary w-full">Submit request</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <p class="text-center text-sm text-slate-400 mt-5">
+      Already approved? <a href="{{ url_for('auth.login') }}" class="text-signal hover:text-signal-dark font-medium">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

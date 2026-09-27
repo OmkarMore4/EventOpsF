@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Backup QR code · {{ app_name }}{% endblock %}
+{% block page_title %}Backup QR code{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    #sidebar, header, .no-print { display: none !important; }
+    main { padding: 0 !important; }
+    body { background: white !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <div class="card-hero text-center" id="qr-card">
+    <p class="text-xs font-semibold text-ink/50 uppercase tracking-wide mb-1">Backup check-in</p>
+    <h2 class="font-display font-bold text-xl text-ink mb-1">{{ event.name }}</h2>
+    <p class="text-sm text-ink/60 mb-6">{{ event.venue }}</p>
+
+    <img src="{{ qr_image }}" alt="QR code for backup check-in" class="mx-auto w-64 h-64 border border-ink/10 rounded-xl p-3">
+
+    <p class="text-sm text-ink/70 mt-6 max-w-sm mx-auto">
+      Print this page and post it at the venue entrance. If a volunteer's GPS isn't working, they can
+      scan this code with their phone's camera to check in or out instead &mdash; no location permission needed.
+    </p>
+  </div>
+
+  <div class="no-print mt-5 flex flex-wrap items-center justify-between gap-3">
+    <button onclick="window.print()" class="btn-secondary">
+      {{ icons.icon('download', 'w-4 h-4') }} Print this page
+    </button>
+    <form method="POST" action="{{ url_for('admin.event_qr_regenerate', event_id=event._id) }}"
+      data-confirm="Generate a new code? Any copies already printed will stop working.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Regenerate code</button>
+    </form>
+  </div>
+
+  <div class="no-print card mt-4">
+    <p class="text-xs font-medium text-ink/50 mb-1">This code links to</p>
+    <p class="text-xs text-ink/60 break-all coord-text">{{ checkin_url }}</p>
+    <p class="text-xs text-ink/40 mt-3">
+      Testing locally? A phone can't reach <code>localhost</code> on your computer &mdash; open the app via
+      your computer's LAN IP address (e.g. <code>http://192.168.x.x:5000</code>) instead so your phone's camera
+      can actually load the link. This isn't a concern once the app is deployed with a real URL.
+    </p>
+  </div>
+</div>
+{% endblock %}

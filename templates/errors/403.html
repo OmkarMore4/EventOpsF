@@ -1,0 +1,17 @@
+{% extends "base_auth.html" %}
+{% import '_icons.html' as icons %}
+{% block title %}Access denied · {{ app_name }}{% endblock %}
+{% block guest_content %}
+<div class="min-h-full flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md text-center">
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-500/15 flex items-center justify-center mb-5">
+      {{ icons.icon('alert', 'w-8 h-8 text-rose-400') }}
+    </div>
+    <h1 class="font-display font-bold text-2xl text-white mb-2">403 — Access denied</h1>
+    <p class="text-slate-400 text-sm mb-6">Your account doesn't have permission to view that page. Admin and volunteer sections are kept separate.</p>
+    <a href="{{ url_for('auth.index') }}" class="inline-flex items-center justify-center bg-signal hover:bg-signal-dark text-white font-semibold text-sm rounded-lg px-5 py-2.5 transition-colors">
+      Take me home
+    </a>
+  </div>
+</div>
+{% endblock %}

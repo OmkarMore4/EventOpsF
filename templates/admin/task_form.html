@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit task' if task else 'New task' }} · {{ app_name }}{% endblock %}
+{% block page_title %}{{ 'Edit task' if task else 'New task' }}{% endblock %}
+
+{% block content %}
+{% set v = values or {} %}
+<form method="POST" class="max-w-2xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card-hero space-y-4">
+    <div>
+      <label class="label-field" for="title">Task title</label>
+      <input class="input-field" type="text" id="title" name="title" required value="{{ v.get('title', '') }}" placeholder="e.g. Set up registration desk">
+    </div>
+    <div>
+      <label class="label-field" for="description">Description</label>
+      <textarea class="textarea-field" id="description" name="description" rows="3">{{ v.get('description', '') }}</textarea>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="assigned_to">Assign to</label>
+        <select class="select-field" id="assigned_to" name="assigned_to" required>
+          <option value="" disabled {{ 'selected' if not v.get('assigned_to') else '' }}>Select a volunteer</option>
+          {% for vol in volunteers %}
+          <option value="{{ vol._id }}" {{ 'selected' if (v.get('assigned_to')|string) == (vol._id|string) else '' }}>{{ vol.name }} &middot; {{ vol.domain }}</option>
+          {% endfor %}
+        </select>
+        {% if not volunteers %}<p class="text-xs text-rose-600 mt-1">No volunteers on this event yet — add one first.</p>{% endif %}
+      </div>
+      <div>
+        <label class="label-field" for="domain">Domain</label>
+        <select class="select-field" id="domain" name="domain">
+          <option value="">No specific domain</option>
+          {% for d in event.domains %}
+          <option value="{{ d }}" {{ 'selected' if v.get('domain') == d else '' }}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label-field" for="priority">Priority</label>
+        <select class="select-field" id="priority" name="priority">
+          <option value="low" {{ 'selected' if v.get('priority') == 'low' else '' }}>Low</option>
+          <option value="medium" {{ 'selected' if (v.get('priority', 'medium')) == 'medium' else '' }}>Medium</option>
+          <option value="high" {{ 'selected' if v.get('priority') == 'high' else '' }}>High</option>
+        </select>
+      </div>
+      <div>
+        <label class="label-field" for="due_date">Due date (optional)</label>
+        <input class="input-field" type="date" id="due_date" name="due_date" value="{{ v.get('due_date') or '' }}">
+      </div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 mt-5">
+    <button type="submit" class="btn-primary" {{ 'disabled' if not volunteers else '' }}>{{ 'Save changes' if task else 'Create task' }}</button>
+    <a href="{{ url_for('admin.tasks_list') }}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
